@@ -1,27 +1,61 @@
 # https://www.hackerrank.com/contests/projecteuler/challenges/euler011/problem
+import numpy as np
 from functools import reduce
+
+
+def largest_product(matrix, length):
+    matrix = np.asarray(matrix)
+    rows, columns = matrix.shape
+    max_product = float('-inf')
+
+    for row in range(length, rows + 1):
+        for column in range(length, columns + 1):
+            matrix_partition = matrix[row - length:row, column - length:column]
+
+            row_product = np.max(np.prod(matrix_partition, axis=0))
+            column_product = np.max(np.prod(matrix_partition, axis=1))
+
+            main_diagonal = np.diagonal(matrix_partition)
+            main_diagonal_product = np.prod(main_diagonal)
+
+            secondary_diagonal = np.fliplr(matrix_partition).diagonal()
+            secondary_diagonal_product = np.prod(secondary_diagonal)
+
+            max_product = max(
+                [max_product, row_product, column_product, main_diagonal_product, secondary_diagonal_product])
+
+    return max_product
 
 
 def product(a, b):
     return a * b
 
 
-def largest_product(matrix, length):
-    max_product = None
+def largest_product_low_level(matrix, length):
+    rows, columns = len(matrix), len(matrix[0])
+    max_product = float('-inf')
 
-    for row in range(len(matrix) - length, len(matrix)):
-        for column in range(len(matrix[row]) - length, len(matrix)):
-            row_product, column_product, diagonal_1_product, diagonal_2_product = 0, 0, 0, 0
+    for row in range(length, rows + 1):
+        for column in range(length, columns + 1):
+            matrix_partition = [row[column - length:column] for row in matrix[row - length:row]]
 
-            row_product = reduce(product, matrix[row][column - length:column])
+            row_product = max([reduce(product, r) for r in matrix_partition])
+            column_product = max([reduce(product, c) for c in
+                                  [[row[i] for row in matrix_partition] for i in range(len(matrix_partition[0]))]])
 
-            max_product = max([row_product, column_product, diagonal_1_product, diagonal_2_product])
+            main_diagonal_product = reduce(product, [matrix_partition[i][i] for i in range(len(matrix_partition))])
+
+            secondary_diagonal_product = reduce(product, [matrix_partition[i][len(matrix_partition) - i - 1] for i in
+                                                          range(len(matrix_partition))])
+
+            max_product = max(
+                [max_product, row_product, column_product, main_diagonal_product, secondary_diagonal_product])
 
     return max_product
 
 
 if __name__ == "__main__":
-    grid = '89 90 95 97 38 15 00 40 00 75 04 05 07 78 52 12 50 77 91 08\
+    grid = '08 02 22 97 38 15 00 40 00 75 04 05 07 78 52 12 50 77 91 08\
             49 49 99 40 17 81 18 57 60 87 17 40 98 43 69 48 04 56 62 00\
             81 49 31 73 55 79 14 29 93 71 40 67 53 88 30 03 49 13 36 65\
             52 70 95 23 04 60 11 42 69 24 68 56 01 32 56 71 37 02 36 91\
@@ -45,4 +79,7 @@ if __name__ == "__main__":
     vector = [int(s) for s in grid.split(" ") if s != '']
     matrix = [vector[i:i + 20] for i in range(0, len(vector), 20)]
 
+    print(np.asarray(matrix))
+    print()
     print(largest_product(matrix, 4))
+    print(largest_product_low_level(matrix, 4))
